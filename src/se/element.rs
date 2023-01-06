@@ -321,15 +321,35 @@ impl<'k, W: Write> Struct<'k, W> {
         self.ser.ser.writer.write_str(key.0)?;
         self.ser.ser.writer.write_char('=')?;
 
-        //TODO: Customization point: preferred quote style
-        self.ser.ser.writer.write_char('"')?;
-        value.serialize(SimpleTypeSerializer {
-            writer: &mut self.ser.ser.writer,
-            target: QuoteTarget::DoubleQAttr,
+        let mut out = String::new();
+
+        let msg = value.serialize(SimpleTypeSerializer {
+            writer: &mut out,
+            target: QuoteTarget::Text,
             level: self.ser.ser.level,
             indent: Indent::None,
         })?;
-        self.ser.ser.writer.write_char('"')?;
+
+        //TODO: Customization point: preferred quote style
+        if msg.contains("\"") {
+            self.ser.ser.writer.write_char('\'')?;
+            value.serialize(SimpleTypeSerializer {
+                writer: &mut self.ser.ser.writer,
+                target: QuoteTarget::SingleQAttr,
+                level: self.ser.ser.level,
+                indent: Indent::None,
+            })?;
+            self.ser.ser.writer.write_char('\'')?;
+        } else {
+            self.ser.ser.writer.write_char('"')?;
+            value.serialize(SimpleTypeSerializer {
+                writer: &mut self.ser.ser.writer,
+                target: QuoteTarget::DoubleQAttr,
+                level: self.ser.ser.level,
+                indent: Indent::None,
+            })?;
+            self.ser.ser.writer.write_char('"')?;
+        }
 
         Ok(())
     }

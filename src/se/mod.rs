@@ -175,6 +175,7 @@ const fn is_xml11_name_start_char(ch: char) -> bool {
         | 'A'..='Z'
         | '_'
         | 'a'..='z'
+        | '0'..='9'
         | '\u{00C0}'..='\u{00D6}'
         | '\u{00D8}'..='\u{00F6}'
         | '\u{00F8}'..='\u{02FF}'
@@ -293,7 +294,7 @@ impl<'r, W: Write> Serializer<'r, W> {
         Self {
             ser: ContentSerializer {
                 writer,
-                level: QuoteLevel::Full,
+                level: QuoteLevel::Partial,
                 indent: Indent::None,
                 write_indent: false,
             },
@@ -356,7 +357,7 @@ impl<'r, W: Write> Serializer<'r, W> {
         Ok(Self {
             ser: ContentSerializer {
                 writer,
-                level: QuoteLevel::Full,
+                level: QuoteLevel::Partial,
                 indent: Indent::None,
                 write_indent: false,
             },
@@ -367,6 +368,12 @@ impl<'r, W: Write> Serializer<'r, W> {
     /// Configure indent for a serializer
     pub fn indent(&mut self, indent_char: char, indent_size: usize) -> &mut Self {
         self.ser.indent = Indent::Owned(Indentation::new(indent_char as u8, indent_size));
+        self
+    }
+
+    /// Configure escape level for a serializer
+    pub fn escape(&mut self, level: QuoteLevel) -> &mut Self {
+        self.ser.level = level;
         self
     }
 
